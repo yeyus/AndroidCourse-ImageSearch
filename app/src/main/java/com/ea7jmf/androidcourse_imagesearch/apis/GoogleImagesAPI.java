@@ -62,7 +62,6 @@ public class GoogleImagesAPI {
     /* Sets the query and resets cursor */
     public void setQuery(String query) {
         this.query = query;
-        this.start = 0;
     }
 
     public int getPageSize() {
@@ -105,8 +104,8 @@ public class GoogleImagesAPI {
         this.site = site;
     }
 
-    public void nextPage() {
-        this.start += this.pageSize;
+    public int nextPage() {
+        return this.start + this.pageSize;
     }
 
     private String buildQueryURL(String query) {

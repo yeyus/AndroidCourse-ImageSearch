@@ -27,6 +27,7 @@ import com.ea7jmf.androidcourse_imagesearch.R;
 import com.ea7jmf.androidcourse_imagesearch.apis.GoogleImagesAPI;
 import com.ea7jmf.androidcourse_imagesearch.fragments.SettingsDialog;
 import com.ea7jmf.androidcourse_imagesearch.models.ImageResult;
+import com.ea7jmf.androidcourse_imagesearch.thirdparty.EndlessScrollListener;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.ResponseHandlerInterface;
 
@@ -60,9 +61,13 @@ public class SearchActivity extends ActionBarActivity implements SettingsDialog.
         api = new GoogleImagesAPI();
 
         setupView();
+        setupListeners();
+
         imageResults = new ArrayList<>();
         aImageResults = new ImageResultsAdapter(this, imageResults);
         gvResults.setAdapter(aImageResults);
+
+        isNetworkAvailable();
     }
 
     private void setupView() {
@@ -71,7 +76,9 @@ public class SearchActivity extends ActionBarActivity implements SettingsDialog.
         ivLoaderImage = (ImageView) findViewById(R.id.ivLoaderImage);
         txtLoaderCaption = (TextView) findViewById(R.id.txtLoaderCaption);
         animRotate = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.rotate);
+    }
 
+    private void setupListeners() {
         gvResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -81,8 +88,14 @@ public class SearchActivity extends ActionBarActivity implements SettingsDialog.
                 startActivity(i);
             }
         });
-    }
 
+        gvResults.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount) {
+                doSearch(api.getQuery(), api.nextPage());
+            }
+        });
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -110,7 +123,7 @@ public class SearchActivity extends ActionBarActivity implements SettingsDialog.
 
                 searchView.clearFocus();
 
-                doSearch(s);
+                doSearch(s, 0);
                 return true;
             }
 
@@ -164,13 +177,21 @@ public class SearchActivity extends ActionBarActivity implements SettingsDialog.
         return super.onOptionsItemSelected(item);
     }
 
-    private void doSearch(String query) {
+    private void doSearch(String query, int start) {
         gvResults.setClickable(false);
 
         ResponseHandlerInterface handler = new JsonHttpResponseHandler() {
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable throwable, JSONObject errorResponse) {
                 super.onFailure(statusCode, headers, throwable, errorResponse);
+
+                ivLoaderImage.setImageResource(R.drawable.warning);
+                txtLoaderCaption.setText(getText(R.string.loader_failure));
+                if(gvResults.getVisibility() != FrameLayout.VISIBLE) {
+                    rlLoader.setVisibility(FrameLayout.VISIBLE);
+                    gvResults.setVisibility(FrameLayout.GONE);
+                }
+
                 gvResults.setClickable(true);
             }
 
@@ -191,6 +212,11 @@ public class SearchActivity extends ActionBarActivity implements SettingsDialog.
                     }
 
                 } catch (JSONException e) {
+                    txtLoaderCaption.setText(getText(R.string.loader_failure));
+                    if(gvResults.getVisibility() != FrameLayout.VISIBLE) {
+                        rlLoader.setVisibility(FrameLayout.VISIBLE);
+                        gvResults.setVisibility(FrameLayout.GONE);
+                    }
                     e.printStackTrace();
                 } finally {
                     gvResults.setClickable(false);
@@ -200,8 +226,27 @@ public class SearchActivity extends ActionBarActivity implements SettingsDialog.
 
         if(isNetworkAvailable()) {
             api.setQuery(query);
+            api.setStart(start);
             api.query(handler);
-        } else {
+        }
+    }
+
+    @Override
+    public void onFinishSettingsDialog(Bundle settings) {
+        api.setColor(settings.getString("color"));
+        api.setType(settings.getString("type"));
+        api.setSize(settings.getString("size"));
+        api.setSite(settings.getString("site"));
+    }
+
+    private Boolean isNetworkAvailable() {
+        boolean networkStatus;
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        networkStatus = activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
+
+        if(!networkStatus) {
             // No network
             ivLoaderImage.setImageResource(R.drawable.network);
             ivLoaderImage.setAnimation(null);
@@ -215,20 +260,6 @@ public class SearchActivity extends ActionBarActivity implements SettingsDialog.
             }
         }
 
-    }
-
-    @Override
-    public void onFinishSettingsDialog(Bundle settings) {
-        api.setColor(settings.getString("color"));
-        api.setType(settings.getString("type"));
-        api.setSize(settings.getString("size"));
-        api.setSite(settings.getString("site"));
-    }
-
-    private Boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
+        return networkStatus;
     }
 }

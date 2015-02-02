@@ -17,6 +17,7 @@
     <string name="settings_color">Color</string>
     <string name="settings_type">Type</string>
     <string name="settings_site">Site</string>
+    <string name="loader_failure">Could not load results</string>
 
     <string-array name="size_array">
         <item>any</item>

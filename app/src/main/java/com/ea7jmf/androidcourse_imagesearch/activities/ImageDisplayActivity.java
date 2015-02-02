@@ -12,7 +12,11 @@ import android.os.Bundle;
 import android.support.v7.widget.ShareActionProvider;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import com.ea7jmf.androidcourse_imagesearch.R;
 import com.ea7jmf.androidcourse_imagesearch.models.ImageResult;
@@ -29,16 +33,33 @@ public class ImageDisplayActivity extends ActionBarActivity {
     private ImageView ivImageResult;
     private ShareActionProvider miShareAction;
 
+    private FrameLayout flImageContainer;
+    private ImageView ivLoaderImage;
+    private RelativeLayout rlLoader;
+    private Animation animRotate;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_display);
         ivImageResult = (ImageView) findViewById(R.id.ivImageResult);
 
+        flImageContainer = (FrameLayout) findViewById(R.id.flImageContainer);
+        ivLoaderImage = (ImageView) findViewById(R.id.ivLoaderImage);
+        rlLoader = (RelativeLayout) findViewById(R.id.rlLoader);
+
         result = (ImageResult) getIntent().getSerializableExtra("result");
+
+        animRotate = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.rotate);
+        ivLoaderImage.setAnimation(animRotate);
+
         Picasso.with(this).load(result.getFullUrl()).into(ivImageResult, new Callback() {
             @Override
             public void onSuccess() {
+                if(ivImageResult.getVisibility() != FrameLayout.VISIBLE) {
+                    ivImageResult.setVisibility(FrameLayout.VISIBLE);
+                    rlLoader.setVisibility(FrameLayout.GONE);
+                }
                 setupShareIntent();
             }
 
