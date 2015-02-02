@@ -12,6 +12,8 @@ Simple image search client that shows the usage of GridView:
 * Action Bar SearchView
 
 Regular flow
-[](https://raw.githubusercontent.com/yeyus/AndroidCourse-ImageSearch/master/ImageSearchFlow.gif)
+
+![](https://raw.githubusercontent.com/yeyus/AndroidCourse-ImageSearch/master/ImageSearchFlow.gif)
 No network available
-[](https://raw.githubusercontent.com/yeyus/AndroidCourse-ImageSearch/master/ImageSearchFlow-NoNetwork.gif)
+
+![](https://raw.githubusercontent.com/yeyus/AndroidCourse-ImageSearch/master/ImageSearchFlow-NoNetwork.gif)
